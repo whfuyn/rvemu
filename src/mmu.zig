@@ -69,7 +69,6 @@ pub const Mmu = struct {
             const offset = ehdr.e_phoff + i * @sizeOf(elf.Elf64Phdr);
 
             const phdr_bytes: []align(@alignOf(elf.Elf64Phdr)) const u8 = @alignCast(elf_bytes[offset .. offset + @sizeOf(elf.Elf64Phdr)]);
-            // const phdr_bytes: void = @alignCast(&elf_bytes[offset .. offset + @sizeOf(elf.Elf64Phdr)]);
             const phdr = try elf.Elf64Phdr.fromBytes(phdr_bytes);
             std.debug.print("{any}\n", .{phdr});
             if (phdr.p_type == elf.PT_LOAD) {
@@ -106,11 +105,11 @@ pub const Mmu = struct {
         // After copying segment data, restore the protection.
         try os.mprotect(addr, prot);
 
-        const remaining_bss = roundUp(memsz, page_size) - roundUp(filesz, page_size);
-        if (remaining_bss > 0) {
-            const expect_remaining_bss_addr = aligned_vaddr + roundUp(filesz, page_size);
-            const remaining_bss_addr = try os.mmap(@ptrFromInt(expect_remaining_bss_addr), remaining_bss, prot, os.MAP.ANONYMOUS | os.MAP.PRIVATE | os.MAP.FIXED, -1, 0);
-            if (@intFromPtr(remaining_bss_addr.ptr) != expect_remaining_bss_addr) {
+        const remaining_bss_size = roundUp(memsz, page_size) - roundUp(filesz, page_size);
+        if (remaining_bss_size > 0) {
+            const expect_remaining_bss = aligned_vaddr + roundUp(filesz, page_size);
+            const remaining_bss = try os.mmap(@ptrFromInt(expect_remaining_bss), remaining_bss_size, prot, os.MAP.ANONYMOUS | os.MAP.PRIVATE | os.MAP.FIXED, -1, 0);
+            if (@intFromPtr(remaining_bss.ptr) != expect_remaining_bss) {
                 return Error.FailToMmapTargetAddr;
             }
         }

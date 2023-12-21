@@ -18,7 +18,6 @@ pub const PT_LOAD = 0x1;
 const Error = error{
     InvalidElf,
     BytesTooShort,
-    BadElf,
     UnsupportedArch,
 };
 
