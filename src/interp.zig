@@ -5,72 +5,36 @@ const toGuest = mmu.toGuest;
 const decode = @import("decode.zig");
 const machine = @import("machine.zig");
 const Instruction = decode.Instruction;
+const InsnType = decode.InsnType;
 const State = machine.State;
 
-// TODO: How can I `#[zigfmt(skip)]` it?
-const GpReg = enum(u5) {
-    zero,
-    ra,
-    sp,
-    gp,
-    tp,
-    //
-    t0,
-    t1,
-    t2,
-    //
-    s0,
-    s1,
-    //
-    a0,
-    a1,
-    a2,
-    a3,
-    a4,
-    a5,
-    a6,
-    a7,
-    //
-    s2,
-    s3,
-    s4,
-    s5,
-    s6,
-    s7,
-    s8,
-    s9,
-    s10,
-    s11,
-    //
-    t3,
-    t4,
-    t5,
-    t6,
+const INSTR_HANDLERS = [_]fn (*State, *const Instruction) callconv(.Inline) void{
+    addi,
 };
 
-// TODO: how can I get it inline?
-const INSTR_HANDLER = [_]*const fn (*State, *const Instruction) void{addi};
-
-fn addi(state: *State, instr: *const Instruction) void {
+inline fn addi(state: *State, insn: *const Instruction) void {
     _ = state;
-    _ = instr;
+    _ = insn;
     unreachable;
 }
 
 pub fn executeBlockInterp(state: *State) void {
-    var instr: Instruction = undefined;
+    var insn: Instruction = undefined;
     while (true) {
+        // TODO: will it cause problems if it's a compressed insnuction?
         const pc: *const u32 = @ptrFromInt(toHost(state.pc));
-        const instr_word = pc.*;
-        instr = Instruction.decode(u32, instr_word);
+        const insn_word = pc.*;
+        insn = Instruction.decode(insn_word);
 
-        const index = @intFromEnum(instr.ty);
-        INSTR_HANDLER[index](state, &instr);
+        switch (@intFromEnum(insn.ty)) {
+            inline @intFromEnum(InsnType.addi)...@intFromEnum(InsnType.addi) => |idx| INSTR_HANDLERS[idx](state, &insn),
+            else => unreachable,
+        }
 
-        state.gp_regs[@intFromEnum(GpReg.zero)] = 0;
+        state.gp_regs[@intFromEnum(decode.GpReg.zero)] = 0;
 
-        if (instr.cont) break;
+        if (insn.cont) break;
 
-        state.pc += if (instr.rvc) 2 else 4;
+        state.pc += if (insn.rvc) 2 else 4;
     }
 }

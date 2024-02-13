@@ -107,9 +107,9 @@ pub const Mmu = struct {
 
         const remaining_bss_size = roundUp(memsz, page_size) - roundUp(filesz, page_size);
         if (remaining_bss_size > 0) {
-            const expect_remaining_bss = aligned_vaddr + roundUp(filesz, page_size);
-            const remaining_bss = try os.mmap(@ptrFromInt(expect_remaining_bss), remaining_bss_size, prot, os.MAP.ANONYMOUS | os.MAP.PRIVATE | os.MAP.FIXED, -1, 0);
-            if (@intFromPtr(remaining_bss.ptr) != expect_remaining_bss) {
+            const expect_remaining_bss_addr = aligned_vaddr + roundUp(filesz, page_size);
+            const remaining_bss_addr = try os.mmap(@ptrFromInt(expect_remaining_bss_addr), remaining_bss_size, prot, os.MAP.ANONYMOUS | os.MAP.PRIVATE | os.MAP.FIXED, -1, 0);
+            if (@intFromPtr(remaining_bss_addr.ptr) != expect_remaining_bss_addr) {
                 return Error.FailToMmapTargetAddr;
             }
         }

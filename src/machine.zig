@@ -2,6 +2,7 @@ const std = @import("std");
 const fs = std.fs;
 const mem = std.mem;
 const elf = @import("elf.zig");
+const decode = @import("decode.zig").decode;
 const Mmu = @import("mmu.zig").Mmu;
 const assert = std.debug.assert;
 const interp = @import("interp.zig");
@@ -24,7 +25,7 @@ pub const Machine = struct {
     state: State = .{},
     mmu: Mmu = .{},
 
-    pub fn load_program(self: *Machine, file_path: [:0]const u8, allocator: mem.Allocator) !void {
+    pub fn load_program(self: *Machine, file_path: []const u8, allocator: mem.Allocator) !void {
         var f = try fs.cwd().openFile(file_path, .{});
         defer f.close();
 
